@@ -2,6 +2,9 @@ package mycontroller;
 
 import controller.CarController;
 import world.Car;
+import world.World;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,55 +24,39 @@ public class MyAutoController extends CarController{
 		// Car Speed to move at
 		private final int CAR_MAX_SPEED = 1;
 		
+		HashMap<Coordinate,MapTile> worldMap = World.getMap();
+		
+		HashMap<Coordinate, Boolean> wallsFollowed = new HashMap<Coordinate, Boolean>();
+
+		
+		MapSearch theMap;
+
+		
 		public MyAutoController(Car car) {
 			super(car);
+			theMap = new MapSearch();
+
+
 		}
 		
-		// Coordinate initialGuess;
-		// boolean notSouth = true;
 		@Override
 		public void update() {
 			// Gets what the car can see
 			HashMap<Coordinate, MapTile> currentView = getView();
 			
-		    Iterator it = currentView.entrySet().iterator();
-
-			Coordinate goToTile = null; 
+			theMap.updateMap(currentView);
 			
-		    while (it.hasNext()) {
-		        Map.Entry pair = (Map.Entry)it.next();
-		        
-		        MapTile tile = (MapTile) pair.getValue();
-		        
-		        if (tile.getType() == Type.TRAP){
-		        
-		        String type = tile.getType().toString();
-		        goToTile = (Coordinate) pair.getKey();
-		        System.out.println("TRAP DETECTED AT "  + pair.getKey() + " = " +  type );
-		        
-		        }
-		    }
-		    
-		    boolean isViable = isViableTrap(goToTile);
+			theMap.mapToString(theMap.getParcels());
+			
+			theMap.mapToString(theMap.getExits());
+
 			
 			// checkStateChange();
 			if(getSpeed() < CAR_MAX_SPEED){       // Need speed to turn and progress toward the exit
 				applyForwardAcceleration();   // Tough luck if there's a wall in the way
 			}
-			
-			
 			if (isFollowingWall) {
 				// If wall no longer on left, turn left
-				System.out.println("FOLLOWING WALL");
-				
-				if (goToTile != null) {
-					System.out.println("Heading to Trap");
-					
-					checkTrapAhead(getOrientation(), currentView, goToTile);
-					
-
-				}
-				
 				if(!checkFollowingWall(getOrientation(), currentView)) {
 					turnLeft();
 				} else {
@@ -79,9 +66,6 @@ public class MyAutoController extends CarController{
 					}
 				}
 			} else {
-				
-				System.out.println("NOT FOLLOWING WALL");
-
 				// Start wall-following (with wall on left) as soon as we see a wall straight ahead
 				if(checkWallAhead(getOrientation(),currentView)) {
 					turnRight();
@@ -89,6 +73,8 @@ public class MyAutoController extends CarController{
 				}
 			}
 		}
+		
+		
 
 		private boolean isViableTrap(Coordinate goToTile) {
 			

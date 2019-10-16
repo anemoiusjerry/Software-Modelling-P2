@@ -63,6 +63,7 @@ public class Car extends Sprite{
 	Car(Sprite sprite, int targetParcels, int fuel, int health){
 		super(sprite);
 		this.targetParcels = targetParcels;
+		System.out.println(this.targetParcels);
 		resetControls();
 		this.health = health;
 		healthUsage = health;
