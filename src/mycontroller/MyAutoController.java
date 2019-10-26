@@ -2,11 +2,9 @@ package mycontroller;
 
 import controller.CarController;
 import world.Car;
-import world.World;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
 
 import tiles.MapTile;
 import utilities.Coordinate;
@@ -47,37 +45,37 @@ public class MyAutoController extends CarController{
 		// moveToGoal handles the necessary movement to get there
 		Coordinate current = new Coordinate(getPosition());
 
-		if (!theMap.visited(current)) {
-			theMap.visit(current);
-		}
+		theMap.visit(current);
 
 		// Gets what 9x9 area around car
 		HashMap<Coordinate, MapTile> currentView = getView();
 		// Record to map
 		theMap.applyNewView(currentView);
 
-		ExploreStrategy explore = new ExploreStrategy();
-		ParcelStrategy parcel = new ParcelStrategy();
-		ExitStrategy exit = new ExitStrategy();
+		// Get all strategies
+		StrategyFactory factory = StrategyFactory.getInstance();
+		IGoalStrategy explore = factory.getStrategy("explore");
+		IGoalStrategy parcel = factory.getStrategy("parcel");
+		IGoalStrategy exit = factory.getStrategy("exit");
 
 		Coordinate next = null;
 
 		int numFound = this.numParcelsFound();
 		// Try to exit if min parcels found
 		if (numFound == minParcelsCount) {
-			next = exit.getGoal(theMap, current);
+			next = exit.getGoal(theMap, current, getOrientation());
 		}
 
 		// Continue getting parcels if there are more
-		if (next== null && theMap.getParcels().size() > 0) {
-			next = parcel.getGoal(theMap, current) ;
+		if (next == null && theMap.getParcels().size() > 0) {
+			System.out.format("Parcel found %d\n", theMap.getParcels().size());
+			next = parcel.getGoal(theMap, current, getOrientation()) ;
 		}
 
 		System.out.println("Parcels size : " +  theMap.getParcels().size());
 
 		if (next == null) {
-			explore.setOrientation(getOrientation());
-			next = explore.getGoal(theMap, current) ;
+			next = explore.getGoal(theMap, current, getOrientation()) ;
 			System.out.println("EXPLORE MODE");
 		}
 
@@ -103,7 +101,7 @@ public class MyAutoController extends CarController{
 				applyForwardAcceleration();
 			}
 		}
-		
+
 		moveToGoal(next, current, getOrientation());
 	}
 
@@ -208,6 +206,7 @@ public class MyAutoController extends CarController{
 	}
 
 	private void moveToGoal(Coordinate goal, Coordinate currentPosition, Direction orientation) {
+		theMap.parent = currentPosition;
 
 		// Gather our positon relative to the goal
 		boolean sameX = false;
@@ -233,16 +232,9 @@ public class MyAutoController extends CarController{
 			greaterY = true;
 		}
 
-
-
 		// Base actions on our orientation, assumes we're moving due to the check at start of update, so can make any necessary turns
 		switch (orientation) {
-
-
-
 			case EAST:
-
-
 				if (sameX) {
 
 					if (greaterY) {
@@ -256,130 +248,74 @@ public class MyAutoController extends CarController{
 				}
 
 				if (sameY) {
-
-
 					if (greaterX) {
-
 						applyReverseAcceleration();
-
-
 					}
-
 					else {
 						applyForwardAcceleration();
 					}
-
 				}
-
 				break;
 
-
-
-
 			case WEST:
-
 				if (sameX) {
-
 					if(greaterY) {
 						turnLeft();
 					}
-
 					else {
 						turnRight();
 					}
-
 				}
-
 				if (sameY) {
-
 					if (greaterX) {
-
 						applyForwardAcceleration();
-
-
 					}
-
 					else {
-
 						applyReverseAcceleration();
 					}
-
 				}
-
 				break;
 
 			case NORTH:
-
 				if (sameX) {
-
 					if (greaterY) {
-
 						applyReverseAcceleration();
-
 					}
-
 					else {
-
-
 						applyForwardAcceleration();
-
 					}
 				}
-
 				if(sameY) {
-
 					if (greaterX) {
-
 						turnLeft();
-
 					}
-
 					else {
 						turnRight();
 					}
-
 				}
-
 				break;
 
 			case SOUTH:
-
 				if (sameX) {
-
 					if (greaterY) {
-
 						applyForwardAcceleration();
-
-
 					}
 
 					else {
-
 						applyReverseAcceleration();
-
 					}
-
-
 				}
 
 				if(sameY) {
-
 					if (greaterX) {
-
 						turnRight();
-
 					}
-
 					else {
 						turnLeft();
 					}
-
 				}
-
 				break;
-
 		}
 
 	}
-
 }

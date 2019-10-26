@@ -2,145 +2,95 @@ package mycontroller;
 
 import tiles.MapTile;
 import utilities.Coordinate;
-import world.WorldSpatial;
 import world.WorldSpatial.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
 
-import static java.lang.Math.abs;
-import static java.lang.Math.copySign;
 import static world.WorldSpatial.Direction.*;
 
 public class ExploreStrategy implements IGoalStrategy {
 
-    private boolean isFollowingWall = false;
-    private Direction orientation;
-    private Coordinate parent;
-
     @Override
-    public Coordinate getGoal(MapSearch map, Coordinate currentPost) {
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost, Direction orientation) {
         /**
          * Inputs: MapSearch object that records all car has seen
          */
+        Stack<Coordinate> toBeExplored = new Stack<>();
 
         HashMap<Coordinate, MapTile> seen = map.getMap();
         HashMap<Coordinate, MapTile> unexplored = new HashMap<Coordinate, MapTile>();
-        ArrayList<Coordinate> immediateNeighbours;
 
         // Update map from car radar
         for (Coordinate coord : seen.keySet()) {
             if (!map.visited(coord) && !map.getWalls().containsKey(coord)) {
                 unexplored.put(coord, seen.get(coord));
+                // Stack to prioritise closest unexplored coord
+                toBeExplored.push(coord);
             }
         }
 
-        Coordinate next = followWall(map, currentPost);
-
-        // Move to next if haven't visited and not a wall
-        if (!map.visited(next) && !map.getWalls().containsKey(next))
+        // Wall following strategy
+        Coordinate next = followWall(map, currentPost, orientation);
+        if (next != null)
             return next;
 
-        else {
-            // Check if 2 squares on is visited
-            Coordinate next2 = moveForward(next, orientation);
-            if (!map.visited(next2) && !map.getWalls().containsKey(next2)) {
-                return next2;
-            }
+        ArrayList<Coordinate> neighbours = map.getNeighbours(currentPost);
+        // Move to next unexplored coord
+        for (Coordinate coord : unexplored.keySet()) {
+            if (neighbours.contains(coord))
+                return coord;
+        }
 
-            immediateNeighbours = getNeighbours(currentPost);
+        int leastVisitedWeight = Integer.MAX_VALUE;
+        Coordinate leastVisited = null;
 
-            for (Coordinate c : immediateNeighbours) {
-                // Return coord if valid an unexplored
-                if (unexplored.containsKey(c) && !map.getWalls().containsKey(c)) {
-                    return c;
+
+        // Run through the stack and visit the node that been visited least
+        while (!toBeExplored.empty()) {
+            next = map.BFSSearch(currentPost, toBeExplored.pop());
+
+            if (next != null) {
+                int visitCount = 0;
+                // Pick node in least visited area
+                ArrayList<Coordinate> newNeighbours = map.getNeighbours(next);
+
+                // Count the number of visits to area around current coord
+                for (Coordinate coord : newNeighbours) {
+                    if (map.getVisited().containsKey(coord)) {
+                        visitCount += map.getVisited().get(coord);
+                    }
+                }
+
+                // Update least visited coord
+                if (visitCount < leastVisitedWeight) {
+                    leastVisited = next;
+                    leastVisitedWeight = visitCount;
                 }
             }
-
-            // Otherwise return a valid square
-            return followWall(map, currentPost);
-
         }
+        return leastVisited;
     }
 
-
-//        if (unexplored.size() > 0) {
-//            int min = Integer.MAX_VALUE;
-//            Coordinate goal = null;
-//
-//            // Get the square closest to current location
-//            for (Coordinate coord : unexplored.keySet()) {
-//                if (distanceBetweenCoordinates(currentPost, coord) < min) {
-//                    min = distanceBetweenCoordinates(currentPost, coord);
-//                    goal = map.BFSSearch(currentPost, coord);
-//                }
-//            }
-//            return goal;
-//        }
-
-
-
-
-
-
-    public Coordinate followWall(MapSearch map, Coordinate currentPost) {
+    public Coordinate followWall(MapSearch map, Coordinate currentPost, Direction orientation) {
         /**
-         * Wall of left following method.
+         * Always move forward, right turning strategy.
          */
 
-        ArrayList<Coordinate> immediateNeighbours = getNeighbours(currentPost);
-
         Coordinate front = moveForward(currentPost, orientation);
-        Coordinate left = moveForward(currentPost, turnLeft(orientation));
         Coordinate right = moveForward(currentPost, turnRight(orientation));
 
         // Continue forward until wall is met
-        if (!map.getWalls().containsKey(front)) {
+        if (!map.getWalls().containsKey(front) && !map.visited(front)) {
             return front;
         }
-        else if (!map.getWalls().containsKey(right)) {
+        // Turn right if wall in front
+        else if (!map.getWalls().containsKey(right) && !map.visited(right)) {
             return right;
         }
-        else if (!map.getWalls().containsKey(left))
-            return left;
-        else {
-            immediateNeighbours.remove(front);
-            immediateNeighbours.remove(right);
-            immediateNeighbours.remove(left);
-            return immediateNeighbours.get(0);
-        }
-    }
-
-//        if (isFollowingWall) {
-//            // Wall left and wall front case - turn right
-//            if (map.getWalls().containsKey(leftCoord) && map.getWalls().containsKey(frontCoord))
-//                next = moveForward(currentPost, turnRight(orientation));
-//            // Otherwise continue moving forward
-//            else
-//                next = moveForward(currentPost, orientation);
-//
-//        }
-//
-//        else {
-//            // turn left if no wall on left
-//            if (!map.getWalls().containsKey(leftCoord)) {
-//                next = leftCoord;
-//                isFollowingWall = true;
-//            }
-
-    public ArrayList<Coordinate> getNeighbours(Coordinate currentPost) {
-        ArrayList<Coordinate> immediateNeighbours = new ArrayList<>();
-
-        Coordinate up = new Coordinate(currentPost.x, currentPost.y + 1);
-        Coordinate right = new Coordinate(currentPost.x + 1, currentPost.y);
-        Coordinate left = new Coordinate(currentPost.x - 1, currentPost.y);
-        Coordinate down = new Coordinate(currentPost.x, currentPost.y - 1);
-
-        immediateNeighbours.add(up);
-        immediateNeighbours.add(right);
-        immediateNeighbours.add(left);
-        immediateNeighbours.add(down);
-        return immediateNeighbours;
+        // Return null and switch to random strategy
+        return null;
     }
 
     public Coordinate moveForward(Coordinate currentPost, Direction orientation) {
@@ -178,39 +128,5 @@ public class ExploreStrategy implements IGoalStrategy {
             return compass.get(0);
 
         return compass.get(dir);
-    }
-
-    public Direction turnLeft(Direction orientation) {
-        ArrayList<Direction> compass = new ArrayList<>();
-        compass.add(NORTH);
-        compass.add(EAST);
-        compass.add(SOUTH);
-        compass.add(WEST);
-
-        int dir = compass.indexOf(orientation) - 1;
-        // Wrap around
-        if (dir < 0)
-            return compass.get(3);
-
-        return compass.get(dir);
-    }
-
-
-    public int distanceBetweenCoordinates(Coordinate c1, Coordinate c2) {
-        /**
-         * Manhattan Distance
-         */
-        int xDiff = abs(c1.x - c2.x);
-        int yDiff = abs(c1.y - c2.y);
-
-        return xDiff + yDiff;
-    }
-
-    public void setOrientation(Direction new_direction) {
-        this.orientation = new_direction;
-    }
-
-    public void setParent(Coordinate location) {
-        this.parent = location;
     }
 }

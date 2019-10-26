@@ -2,13 +2,14 @@ package mycontroller;
 
 import tiles.MapTile;
 import utilities.Coordinate;
+import world.WorldSpatial;
 
 import java.util.HashMap;
 
 public class ExitStrategy implements IGoalStrategy {
 
     @Override
-    public Coordinate getGoal(MapSearch map, Coordinate currentPost) {
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost, WorldSpatial.Direction orientation) {
         /**
          * Gets next coord to move to exit.
          */

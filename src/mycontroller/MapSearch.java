@@ -2,10 +2,6 @@ package mycontroller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-
 import com.badlogic.gdx.utils.Queue;
 
 import tiles.MapTile;
@@ -20,14 +16,13 @@ import world.World;
 // 1. Tracking what we have seen so far \
 // 2. Determining the shortest path between our current position and the goal position
 public class MapSearch {
-
-
+	public Coordinate parent;
 
 	// Map of the walls we've seen
 	private HashMap<Coordinate, MapTile> walls;
 
 	// Map of tiles we've actually visited
-	private ArrayList<Coordinate> visited;
+	private HashMap<Coordinate, Integer> visited;
 
 	// Map of the exits seen
 	private HashMap<Coordinate, MapTile> exits;
@@ -42,38 +37,30 @@ public class MapSearch {
 
 	// Initialize our primary map, and its submaps
 	public MapSearch() {
-
 		System.out.println("Creating the map!");
 
-
-
-
-
-		this.visited = new ArrayList<Coordinate>();
-
-		this.walls = new HashMap<Coordinate, MapTile>();
-
-		this.map = new HashMap<Coordinate,MapTile>();
-
-		this.exits = new HashMap<Coordinate,MapTile>();
-
-		this.parcels = new HashMap<Coordinate,MapTile>();
-
-
-
-
+		this.visited = new HashMap<>();
+		this.walls = new HashMap<>();
+		this.map = new HashMap<>();
+		this.exits = new HashMap<>();
+		this.parcels = new HashMap<>();
 	}
-
-
 
 	public void visit(Coordinate c) {
 		/* Record all visited coords. */
-		visited.add(c);
+		if (visited.containsKey(c)) {
+			Integer newVal = visited.get(c) + 1;
+			visited.put(c, newVal);
+		}
+		else {
+			// Create new entry
+			visited.put(c, 0);
+		}
 	}
 
 	public boolean visited(Coordinate c) {
 		/* Checks whether a coordinate has been visited before. */
-		for (Coordinate inspected: visited) {
+		for (Coordinate inspected: visited.keySet()) {
 			if (inspected.equals(c))
 				return true;
 		}
@@ -126,11 +113,11 @@ public class MapSearch {
 		}
 	}
 
-	public ArrayList<Coordinate> getVisited() {
+	public HashMap<Coordinate, Integer> getVisited() {
 		return visited;
 	}
 
-	public void setVisited(ArrayList<Coordinate> visited) {
+	public void setVisited(HashMap<Coordinate, Integer> visited) {
 		this.visited = visited;
 	}
 
@@ -142,6 +129,7 @@ public class MapSearch {
 		HashMap<Coordinate, Integer> distance = new HashMap();
 		HashMap<Coordinate, Coordinate> parent = new HashMap();
 
+		// Record everything we have seen so far
 		for (Coordinate coord: map.keySet()) {
 			visited.put(coord, false);
 			distance.put(coord, 1000000);
@@ -150,33 +138,21 @@ public class MapSearch {
 
 		visited.put(start, true);
 		distance.put(start, 0);
-		queue.addLast(start);;
+		queue.addLast(start);
 
 		while (queue.size != 0) {
 			Coordinate u = queue.first();
 			queue.removeFirst();
 
-			ArrayList<Coordinate> adjacentPotential = new ArrayList<>();
+			ArrayList<Coordinate> adjacentPotential = getNeighbours(u);
 			ArrayList<Coordinate> adjacent = new ArrayList<>();
 
-			Coordinate a1 = new Coordinate(u.x+1, u.y);
-			Coordinate a2 = new Coordinate(u.x-1, u.y);
-			Coordinate a3 = new Coordinate(u.x, u.y-1);
-			Coordinate a4 = new Coordinate(u.x, u.y+1);
-
-			adjacentPotential.add(a1);
-			adjacentPotential.add(a2);
-			adjacentPotential.add(a3);
-			adjacentPotential.add(a4);
-
-			for (Coordinate c: adjacentPotential) {
-				if (!walls.containsKey(c) && map.containsKey(c)) {
+			for (Coordinate c : adjacentPotential) {
+				if (map.containsKey(c))
 					adjacent.add(c);
-				}
 			}
 
 			for (Coordinate adj: adjacent) {
-
 				if (visited.get(adj) == false) {
 
 					visited.put(adj, true);
@@ -195,7 +171,7 @@ public class MapSearch {
 	}
 
 
-	// Construct the path based on the hashmap of coordiante's parent nodes
+	// Construct the path based on the hash map of coordinate's parent nodes
 	private Coordinate parentToCoordinateRequired(HashMap<Coordinate, Coordinate> parent, Coordinate start, Coordinate goal) {
 
 		Queue<Coordinate> path = new Queue<Coordinate> ();
@@ -214,6 +190,22 @@ public class MapSearch {
 		System.out.println(path.get(path.size-2));
 
 		return path.get(path.size -2);
+	}
+
+	public ArrayList<Coordinate> getNeighbours(Coordinate c) {
+		ArrayList<Coordinate> adjacentPotential = new ArrayList<>();
+		ArrayList<Coordinate> adjacent = new ArrayList<>();
+
+		adjacentPotential.add(new Coordinate(c.x+1, c.y));
+		adjacentPotential.add(new Coordinate(c.x-1, c.y));
+		adjacentPotential.add(new Coordinate(c.x, c.y-1));
+		adjacentPotential.add(new Coordinate(c.x, c.y+1));
+
+		for (Coordinate adj : adjacentPotential) {
+			if (!walls.containsKey(adj))
+				adjacent.add(adj);
+		}
+		return adjacent;
 	}
 
 	public HashMap<Coordinate, MapTile> getWalls() {

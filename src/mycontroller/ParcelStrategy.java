@@ -2,31 +2,26 @@ package mycontroller;
 
 import tiles.MapTile;
 import utilities.Coordinate;
+import world.WorldSpatial;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
 
-public class ParcelStrategy implements IGoalStrategy{
+import static java.lang.Math.abs;
+
+public class ParcelStrategy implements IGoalStrategy {
 
     @Override
-    public Coordinate getGoal(MapSearch map, Coordinate currentPost) {
-
-
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost, WorldSpatial.Direction orientation) {
         HashMap<Coordinate, MapTile> parcels = map.getParcels();
 
-
-        for (Coordinate c: parcels.keySet()) {
-
+        for (Coordinate c : parcels.keySet()) {
             Coordinate potentialGoal = map.BFSSearch(currentPost, c);
 
-            if (potentialGoal != null) {
+            if (potentialGoal != null)
                 return potentialGoal;
-            }
-
         }
-
-
-        // TODO Auto-generated method stub
         return null;
     }
-
 }
