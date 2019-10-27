@@ -13,7 +13,7 @@ import static java.lang.Math.abs;
 public class ParcelStrategy implements IGoalStrategy {
 
     @Override
-    public Coordinate getGoal(MapSearch map, Coordinate currentPost, WorldSpatial.Direction orientation) {
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost) {
         HashMap<Coordinate, MapTile> parcels = map.getParcels();
 
         for (Coordinate c : parcels.keySet()) {
@@ -22,6 +22,11 @@ public class ParcelStrategy implements IGoalStrategy {
             if (potentialGoal != null)
                 return potentialGoal;
         }
+        return null;
+    }
+
+    @Override
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost, WorldSpatial.Direction orientation) {
         return null;
     }
 }

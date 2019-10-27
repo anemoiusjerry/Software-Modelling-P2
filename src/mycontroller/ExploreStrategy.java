@@ -13,6 +13,11 @@ import static world.WorldSpatial.Direction.*;
 public class ExploreStrategy implements IGoalStrategy {
 
     @Override
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost) {
+        return null;
+    }
+
+    @Override
     public Coordinate getGoal(MapSearch map, Coordinate currentPost, Direction orientation) {
         /**
          * Inputs: MapSearch object that records all car has seen

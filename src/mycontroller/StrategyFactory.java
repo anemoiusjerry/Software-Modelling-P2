@@ -11,9 +11,9 @@ public class StrategyFactory {
     private ExitStrategy exit;
 
     private StrategyFactory() {
-        explore = new ExploreStrategy();
-        parcel = new ParcelStrategy();
-        exit = new ExitStrategy();
+        this.explore = new ExploreStrategy();
+        this.parcel = new ParcelStrategy();
+        this.exit = new ExitStrategy();
     }
 
     public static StrategyFactory getInstance() {

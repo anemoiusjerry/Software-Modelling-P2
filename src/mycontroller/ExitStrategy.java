@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class ExitStrategy implements IGoalStrategy {
 
     @Override
-    public Coordinate getGoal(MapSearch map, Coordinate currentPost, WorldSpatial.Direction orientation) {
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost) {
         /**
          * Gets next coord to move to exit.
          */
@@ -23,6 +23,11 @@ public class ExitStrategy implements IGoalStrategy {
         }
 
         // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Coordinate getGoal(MapSearch map, Coordinate currentPost, WorldSpatial.Direction orientation) {
         return null;
     }
 }

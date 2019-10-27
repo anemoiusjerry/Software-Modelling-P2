@@ -37,20 +37,6 @@ public class MyAutoController extends CarController{
 
 	@Override
 	public void update() {
-		// ------------------------------------------------
-		// Just using the headHome mechanic at the moment to test heading to a point that we know how to get to
-		// When agent reaches headHomePoint (currently by following the wall) it begins heading home
-		// As it reached the headHome point and updated its map accordingly, it must know the way home
-		// At this point the BFS path finding logic kicks in and provides the coordinates to next square to go to
-		// moveToGoal handles the necessary movement to get there
-		Coordinate current = new Coordinate(getPosition());
-
-		theMap.visit(current);
-
-		// Gets what 9x9 area around car
-		HashMap<Coordinate, MapTile> currentView = getView();
-		// Record to map
-		theMap.applyNewView(currentView);
 
 		// Get all strategies
 		StrategyFactory factory = StrategyFactory.getInstance();
@@ -58,18 +44,33 @@ public class MyAutoController extends CarController{
 		IGoalStrategy parcel = factory.getStrategy("parcel");
 		IGoalStrategy exit = factory.getStrategy("exit");
 
+		// ------------------------------------------------
+		// Just using the headHome mechanic at the moment to test heading to a point that we know how to get to
+		// When agent reaches headHomePoint (currently by following the wall) it begins heading home
+		// As it reached the headHome point and updated its map accordingly, it must know the way home
+		// At this point the BFS path finding logic kicks in and provides the coordinates to next square to go to
+		// moveToGoal handles the necessary movement to get there
+
+		Coordinate current = new Coordinate(getPosition());
+		theMap.visit(current);
+
+		// Gets what 9x9 area around car
+		HashMap<Coordinate, MapTile> currentView = getView();
+		// Record to map
+		theMap.applyNewView(currentView);
+
 		Coordinate next = null;
 
 		int numFound = this.numParcelsFound();
 		// Try to exit if min parcels found
 		if (numFound == minParcelsCount) {
-			next = exit.getGoal(theMap, current, getOrientation());
+			next = exit.getGoal(theMap, current);
 		}
 
 		// Continue getting parcels if there are more
 		if (next == null && theMap.getParcels().size() > 0) {
 			System.out.format("Parcel found %d\n", theMap.getParcels().size());
-			next = parcel.getGoal(theMap, current, getOrientation()) ;
+			next = parcel.getGoal(theMap, current) ;
 		}
 
 		System.out.println("Parcels size : " +  theMap.getParcels().size());
